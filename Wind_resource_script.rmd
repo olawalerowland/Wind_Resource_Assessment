@@ -1,0 +1,241 @@
+```{r}
+# loading the required library
+cd /courses/ee9_2021/ee922/Desktop
+
+workd <- paste0("D:/Sem 3 MSc/Alternative Energy Sources/Project/Project 01/wind")
+setwd(workd)
+library(bReeze)
+```
+
+
+```{r}
+# Reading input data, creating metmast
+table<-read.table("lebork_data.dat")
+str(table)
+ts <- timestamp(timestamp=table[,1])
+set10 <- set(height=10, v.avg=table[,2], dir.avg=table[,3])
+--Information about the columns in the table--
+V1    #Date
+V2    #Wind speed (m/s) resolution 1m/ss
+V3    # wind direction (angle)
+V4    #temperature (Celcius) use to calculate air density
+V7    #Pressure measured at station (we are looking this column)
+V8    #Pressure reduced to sea level
+```
+
+
+```{r}
+# Plotting a map with localization of mast: to be complted with placemarks in google map
+
+```
+
+```{r}
+# Checking availability of dataset, cleaning dataset
+#create metmast object with detailed localization of meteo station.
+#Take localization of your station from the coordinate on google map
+
+metmast <- mast(timestamp=ts, set10, loc=c(54.55,17.75), desc="121250 - Koszalin")
+
+#Check availabililty by plotting calendar plot
+Lebork.avail <- availability(metmast)
+plot(Lebork.avail)
+
+#yellow color indicate there is/are a/some hours of missing data
+#green indicate data available
+#magenta indicate there is no data
+
+```
+
+```{r}
+#leaning the dataset
+metmastclean <- clean(mast=metmast) #all the windspeed data below 0.4 will be replaced as NA
+summary(metmast$sets$set1$data$v.avg)
+summary(metmast.clean$sets$set1$data$v.avg)
+```
+
+```{r}
+# Plotting time series with wind measurement; timeseries gives changes of the wind direction and changes from the wind speed
+# Examine a temporal changes of wind speed and direction
+# 1 Year time series
+plot(metmastclean, signal=c("v.avg"),legend=FALSE)
+title(main="Yearly Time Series for Average Wind Speed for 10m - Lebork", col.main="black")
+plot(metmastclean, signal=c("dir.avg"),legend=FALSE)
+title(main="Yearly Time Series for Wind Directions for 10m - Lebork", col.main="black")
+
+# one month time series
+plot(metmastclean, set=1, signal="dir.avg", subset=c("2014-11-01 00:00:00", "2014-11-30 18:00:00"),legend=FALSE)
+title(main="Monthly Time Series for Average Wind Direction for 10m - Lebork", col.main="black")
+
+plot(metmastclean, set=1, signal="v.avg", subset=c("2014-11-01 00:00:00", "2014-11-30 18:00:00"),legend=FALSE)
+title(main="Monthly Time Series for Average Wind Speed for 10m - Lebork", col.main="black")
+
+
+# one week time series
+plot(metmastclean, set=1, signal="v.avg", subset=c("2014-11-07 21:00:00", "2014-11-14 01:00:00"),legend=FALSE)
+title(main="Weekly Time Series for Average Wind Speed for 10m - Lebork", col.main="black")
+
+
+plot(metmastclean, set=1, signal="dir.avg", subset=c("2014-11-07 21:00:00", "2014-11-14 01:00:00"),legend=FALSE)
+title(main="Weekly Time Series for Average Wind Directions for 10m - Lebork", col.main="black")
+
+
+# one day
+plot(metmastclean, set=1, signal="dir.avg", subset=c("2014-11-14 00:00:00", "2014-11-14 23:00:00"),legend=FALSE)
+title(main="One-day Time Series for Average Wind Directions for 10m - Lebork", col.main="black")
+
+plot(metmastclean, set=1, signal="v.avg", subset=c("2014-11-14 00:00:00", "2014-11-14 23:00:00"),legend=FALSE)
+title(main="One-day Time Series for Average Wind Speed for 10m - Lebork", col.main="black")
+
+```
+
+```{r}
+# Calculating and plotting statistics for time series (seasonal and diurnal changes)
+# Calculate monthly means
+Lebork.stats <- month.stats(mast=metmastclean) # default
+
+# calculate monthly median, min, max and standard deviation
+Leborkmed=month.stats(mast=metmastclean, fun="median")
+leborkmin=month.stats(mast=metmastclean, fun="min")
+Leborkmax=month.stats(mast=metmastclean, fun="max")
+Leborksd=month.stats(mast=metmastclean, fun="sd")
+
+Lebork.ms <- month.stats(mast=metmastclean, print=FALSE)
+
+plot(Lebork.ms,legend=FALSE) 
+title(main="Wind Speed Monthly Mean for year 2014", col.main="black")
+plot(Leborkmed,legend=FALSE)
+title(main="Wind Speed Monthly Median for year 2014", col.main="black")
+plot(Leborkmin,legend=FALSE)
+title(main="Wind Speed Monthly Minimum for year 2014", col.main="black")
+plot(Leborkmax,legend=FALSE)
+title(main="Wind Speed Monthly Maximum for year 2014", col.main="black")
+plot(Leborksd,legend=FALSE)
+title(main="Wind Speed Monthly Standard Deviation for year 2014", col.main="black")
+```
+
+```{r}
+# Plot diurnal variation of wind speed and wind direction (function day.plot())
+
+day.plot(mast=metmastclean, set=1, signal="v.avg")
+title(main="Diurnal Variation of Wind Speed", col.main="black")
+
+day.plot(mast=metmastclean, set=1, signal="dir.avg")
+title(main="Diurnal Variation of Wind Speed", col.main="black")
+
+
+#Don't use this
+day.plot(mast=metmastclean, signal="v.avg",
+subset=c("2014-11-01 00:00:00", "2014-11-01 23:50:00"))
+title(main="Diurnal Variation of Wind Speed for 2014-11-01", col.main="black")
+
+day.plot(mast=metmastclean, signal="dir.avg",
+subset=c("2014-11-01 00:00:00", "2014-11-01 23:50:00"))
+title(main="Diurnal Variation of Wind Direction for 2014-11-01", col.main="black")
+```
+
+```{r}
+# Calculating and plotting a rose plot
+
+freq=frequency(mast=metmastclean, v.set=1)
+plot(freq)
+title(main="Frequency of Occurence and Mean Wind Speed Per Wind Direction", col.main="black")
+
+freq16=frequency(mast=metmastclean, v.set=1, num.sectors=16)
+plot(freq16)
+title(main="Frequency of Occurence and Mean Wind Speed Per Wind Direction Sector 16", col.main="black")
+
+freq8=frequency(mast=metmastclean, v.set=1, num.sectors=8)
+plot(freq8)
+title(main="Frequency of Occurence and Mean Wind Speed Per Wind Direction Sector 8", col.main="black")
+
+freqbin=frequency(mast=metmastclean, v.set=1, bins=seq(1.5,15.5,1.0)
+```
+
+
+```{r}
+# Calculating Weibull parameters and plotting Weibull distribution
+
+Leborkwb=weibull(mast=metmastclean, v.set=1, num.sectors=8)
+plot(Leborkwb)
+
+#
+plot(Leborkwb, border="darkgray", breaks=seq(0.5,15.5,1.0))
+title(main="The distribution of wind speeds and the fitted weibull distributiond", col.main="black")
+
+#Wiebull distribution per direction sector
+plot(Leborkwb, type="dir")
+title(main="Fitted weibull distributiond per direction sector", col.main="black")
+```
+
+```{r}
+#In cace you wanna save as pdf: use this
+pdf('name.pdf')
+plot()
+dev.off()
+```
+
+```{r}
+# Calculating and plotting total wind Energy
+pressure <- table[,7]
+temp<-table[,4]
+temp<-temp+273
+r=287
+
+new_pressure <- mean(pressure)
+new_temp <- mean(temp)
+
+#Using the Ideal gas Constant
+# rho=p/r*temp recall r is the specific gas constant for dry air R=287 [J/kg*K], and p is the pressure
+
+rho <- new_pressure/(r*new_temp)
+#rho - the value here is the mean annual air density for your station
+
+#calculate the total wind energy content per direction sector from Weibull data
+energyLeborkwb <- energy(Leborkwb, rho, bins=seq(1.5,15.5,1.0), digits=0)
+
+plot(energyLeborkwb)
+title(main="Wind Energy Per Direction Sector", col.main="black")
+```
+
+```{r}
+# Estimating the wind speed at alpha 0.22
+Leborkhub_height <- windprofile(mast=metmastclean, v.set=1, dir.set=1, alpha=0.22,  method="fixed",  num.sectors=8)
+plot(Leborkhub_height)
+title(main="Wind Profiles Per Direction Sector", col.main="black")
+```
+
+```{r}
+# Calculating the energy production for given wind turbine
+#Reading power curves for the two turbines
+vestas <- pc("Vestas_V90_3.0MW.pow")
+Nordex <- pc("Nordex_N100_2.5MW.pow")
+
+#First type
+plot(vestas)
+title(main="Vestas Power Curve", col.main="black")
+
+#Second Type
+plot(Nordex)
+title(main="Nordex Power Curve", col.main="black")
+
+
+#Energy Plotting: for Vestas
+Leborkaep_v80 <- aep(profile=Leborkhub_height, pc=vestas, hub.h=80,  bins=seq(4.5,20.5,1.0), rho=1.2452)
+plot(Leborkaep_v80)
+title(main="Energy Production: Vestas at 80m", col.main="black")
+
+Leborkaep_v105 <- aep(profile=Leborkhub_height, pc=vestas, hub.h=105,  bins=seq(4.5,20.5,1.0), rho=1.2452)
+plot(Leborkaep_v105)
+title(main="Energy Production: Vestas at 105m", col.main="black")
+
+##Energy Plotting: for Nordex
+Leborkaep_n80 <- aep(profile=Leborkhub_height, pc=Nordex, hub.h=80,  bins=seq(4.5,20.5,1.0), rho=1.2452)
+plot(Leborkaep_n80)
+title(main="Energy Production: Vestas at 80m", col.main="black")
+
+Leborkaep_n100 <- aep(profile=Leborkhub_height, pc=Nordex, hub.h=100,  bins=seq(4.5,20.5,1.0), rho=1.2452)
+plot(Leborkaep_n100)
+title(main="Energy Production: Vestas at 100m", col.main="black")
+```
+
+#End
